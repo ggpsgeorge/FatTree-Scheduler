@@ -3,7 +3,7 @@
 * 
 * Autores:
 *     Caio Batista de Melo - 12/0049945
-*     Felipe Spinola - 
+*     Felipe Spinola - 12/0011131
 *     George Geonardo - 
 *     Giovanni Torres - 
 *     Guilherme Torres - 
@@ -12,34 +12,49 @@
 #include "basic.h"
 
 //funcao que cria os 15 processos da arvore
-void create (Tree *pids) {
-    int send = 0;
+int* create (Tree *pids) {
+    int *queues = createQueues();
+    int rootPid = getpid();
     //define o primeiro processo como a raiz
-    pids->root = true;
+    pids->receiveQueue = 0;
 
-    //vamos criar uma arvore 4 niveis, 2^4-1 = 15
+    pids->root = false;
+
+    //vamos criar uma arvore de 4 niveis, 2^4-1 = 15
     for (int i=0; i < 3; i++) {
+        pids->leftQueue = -1;
+        pids->rightQueue = -1;
+        int queueNum = pids->receiveQueue * 2 + 1;
         //criamos o no filho da esquerda
-        pids->left = fork();
-        if (pids->left) {
+        pids->leftChild = fork();
+        if (pids->leftChild > 0) {
             //sen for o pai, criamos mais um filho, agora o da direita
-            pids->right = fork();
-            if (pids->right) {
+            pids->leftQueue = queueNum++;
+            pids->rightChild = fork();
+            if (pids->rightChild > 0) {
+                pids->rightQueue = queueNum;
                 //se o no tem seus dois filhos, nao precisamos
                 //de mais nenhum, logo, saimos do loop de criacao  
                 break;
-            } else {
+            } else if (pids->rightChild == 0) {
                 //se for filho, zeramos as informacoes
                 //de filhos e dizemos que nao eh a raiz
-                pids->left = 0;
-                pids->root = false;
+                pids->leftChild = 0;
+                pids->leftQueue = -1;
+                pids->rightQueue = -1;
+                pids->receiveQueue = queueNum;
+            } else {
+                cerr << "Deu pau no fork." << endl;
             }
-        } else {
-
+        } else if (pids->leftChild == 0) {
             //se for filho, zeramos as informacoes
             //de filhos e dizemos que nao eh a raiz
-            pids->right = 0;
-            pids->root = false;
+            pids->rightChild = 0;
+            pids->receiveQueue = queueNum;
+            pids->rightQueue = -1;
+            pids->leftQueue = -1;
+        } else {
+            cerr << "Deu pau no fork." << endl;
         }
     }
 
@@ -47,6 +62,19 @@ void create (Tree *pids) {
     pids->busy = false;
     //pega o proprio pid
     pids->my = getpid();
+
+    if (pids->my == rootPid) {
+        pids->root = true;
+    }
+
+    //troca os indices pelos ids das filas
+    if (!pids->root) {
+        pids->receiveQueue = queues[pids->receiveQueue-1];
+    }
+    pids->leftQueue = queues[pids->leftQueue-1];
+    pids->rightQueue = queues[pids->rightQueue-1];
+
+    return queues;
 }
 
 //funcao que cria um novo processo para executar o comando passado
@@ -76,4 +104,29 @@ double run (char **argv) {
 
     //retorna a diferenca entre o tempo de fim e de inicio
     return diff.count();
+}
+
+int* createQueues () {
+    int *ret = (int*) malloc(sizeof(int)*14);
+    int numbers[14], number = 6213;
+
+    for (int i=0; i<14; i++) {
+        numbers[i] = number++;
+        ret[i] = msgget(numbers[i], IPC_CREAT | 0x1FF);
+        //cout << "i: " << i << "\t" << ret[i] << endl;
+        if (ret[i] < 0) {
+            cerr << "Deu pau." << endl;
+        }
+    }
+
+    return ret;
+}
+
+void deleteQueues(int *queues) {
+    for (int i=0; i<14; i++) {
+        //cout << "Deletando: " << queues[i] << endl;
+        if (msgctl(queues[i], IPC_RMID, NULL) != 0) {
+            cerr << "Deu pau." << endl;
+        }
+    }
 }
