@@ -3,8 +3,8 @@
 * 
 * Autores:
 *     Caio Batista de Melo - 12/0049945
-*     Felipe Spinola - 
-*     George Geonardo - 
+*     Felipe Spinola - 12/0011131
+*     George Geonardo - 12/0012197
 *     Giovanni Torres - 
 *     Guilherme Torres - 
 */
@@ -19,6 +19,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <signal.h>
+#include <sys/wait.h>
 
 using std::cout;
 using std::cin;
@@ -27,13 +28,14 @@ using std::endl;
 using std::string;
 
 //prototipo das funcoes
-void rootLoop (Tree);
+void rootLoop (Tree*);
 timedCommand* prepareCommand (char*);
 int getDelay (char*, timedCommand*);
 void printMenu (bool);
 void checkRun ();
 void executeCommand (List*);
-void waitAndExecute (timedCommand*);
+void sendMessage(timedCommand*);
+void killKids();
 
 //prototipo do tratamento de sinais
 void executeScheduled (int);

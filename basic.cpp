@@ -4,7 +4,7 @@
 * Autores:
 *     Caio Batista de Melo - 12/0049945
 *     Felipe Spinola - 12/0011131
-*     George Geonardo - 
+*     George Geonardo - 12/0012197
 *     Giovanni Torres - 
 *     Guilherme Torres - 
 */
@@ -13,7 +13,9 @@
 
 //funcao que cria os 15 processos da arvore
 int* create (Tree *pids) {
+    //cria as filas de mensagem
     int *queues = createQueues();
+    //checa se eh necessaria fazer a subtracao do tamanho de long 
     int rootPid = getpid();
     //define o primeiro processo como a raiz
     pids->receiveQueue = 0;

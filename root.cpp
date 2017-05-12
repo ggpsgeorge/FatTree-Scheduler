@@ -3,8 +3,8 @@
 * 
 * Autores:
 *     Caio Batista de Melo - 12/0049945
-*     Felipe Spinola - 
-*     George Geonardo - 
+*     Felipe Spinola - 12/0011131
+*     George Geonardo - 12/0012197
 *     Giovanni Torres - 
 *     Guilherme Torres - 
 */
@@ -15,10 +15,14 @@
 List *scheduled = NULL;
 List *finished = NULL;
 
+//informacoes declaradas globalmente para estarem disponiveis no tratamento de interrupcoes
+Tree *rootInfo = NULL;
+
 //variavel declarada globalmente para termos controles de quantos jobs foram realizados
 int count = 0;
 
-void rootLoop (Tree info) {
+void rootLoop (Tree *info) {
+    rootInfo = info;
     //array para receber a entrada do usuario
     char in[256];
     //variavel utilizada para verificar a ocorrencia da interrupcao
@@ -98,6 +102,8 @@ void rootLoop (Tree info) {
     } else {
         cout << "\nNenhum comando foi executado.\n" << endl;
     }
+
+    //killKids();
 }
 
 //funcao que recupera as informacoes da string de entrada do usuario
@@ -275,6 +281,8 @@ void executeCommand (List *command) {
         sleep(diff);
     }
 
+    //sendMessage(command->element);
+
     //guardamos o tempo real de inicio
     command->element->startTime = time(NULL);
     //executamos o comando
@@ -305,4 +313,30 @@ void checkRun () {
         //caso a lista esteja vazia, resetamos o alarme
         alarm(0);
     }
+}
+
+//funcao para mandar mensagens aos filhos
+void sendMessage (timedCommand *command) {
+    Message msg;
+    msg.info = (char*) command->argv;
+
+    //manda a mensagem para o filho da esquerda
+    msg.pid = rootInfo->leftChild;
+    msgsnd(rootInfo->leftQueue, &msg, sizeof(msg), 0);
+
+    //manda a mensagem para o filho da direita
+    msg.pid = rootInfo->rightChild;
+    msgsnd(rootInfo->rightQueue, &msg, sizeof(msg), 0);
+}
+
+//funcao para mandar a mensagem de fim aos filhos
+void killKids () {
+    timedCommand *quit = (timedCommand*) sizeof(timedCommand);
+    //mensagem especial que informa o termino da execucao
+    quit->argv = NULL;
+    sendMessage(quit);
+    //espera os filhos terminarem
+    int ret;
+    waitpid(rootInfo->leftChild, &ret, 0);
+    waitpid(rootInfo->rightChild, &ret, 0);
 }

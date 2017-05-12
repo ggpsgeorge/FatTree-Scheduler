@@ -4,7 +4,7 @@
 * Autores:
 *     Caio Batista de Melo - 12/0049945
 *     Felipe Spinola - 12/0011131
-*     George Geonardo - 
+*     George Geonardo - 12/0012197
 *     Giovanni Torres - 
 *     Guilherme Torres - 
 */
@@ -19,7 +19,7 @@ int main () {
     Tree pids;
     //cout << "pids.root | pids.my | pids.left | pids.right | pids.numReceive | pids.numLeft | pids.numRight" << endl;
 
-    //funcao para criar os processos necessarios 
+    //funcao para criar os processos necessarios, guarda os IDs das filas de mensagem para poder deletar no final
     int *queues = create(&pids);
     
     //para forcar a entrada no loop do root com um unico processo
@@ -28,11 +28,13 @@ int main () {
 
     //se este processo for a raiz executa o loop da raiz,
     //caso contrario executa o loop dos filhos
-    /*if (pids.root) {
-        rootLoop(pids);
+    if (pids.root) {
+        rootLoop(&pids);
     } else {
-        childrensLoop(pids);
-    }*/
+        //childrensLoop(&pids);
+    }
+    
+    /*
     struct message {
         long pid;
         char msg[30];
@@ -54,8 +56,9 @@ int main () {
         cout << "Recebi" << endl;
         cout << receive.msg << endl;
     }
-
+    */
     
+    //deleta as filas
     if (pids.root == true)
         deleteQueues(queues);
 
