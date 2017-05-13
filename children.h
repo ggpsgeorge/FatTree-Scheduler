@@ -13,15 +13,14 @@
 #define CHILDREN
 
 #include "basic.h"
-#include <iostream>
-#include <sys/wait.h> 
+#include "commandList.h"
 
 using std::cout;
 using std::endl;
 
 //prototipo das funcoes
 void childrensLoop (Tree*);
-void propagateMessage (Tree*,Message);
+void propagateMessage (Tree*,Message*);
 void finish (Tree*);
 
 #endif

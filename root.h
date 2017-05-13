@@ -35,7 +35,7 @@ void printMenu (bool);
 void checkRun ();
 void executeCommand (List*);
 void sendMessage(timedCommand*);
-void killKids();
+void sendKill();
 
 //prototipo do tratamento de sinais
 void executeScheduled (int);

@@ -46,7 +46,7 @@ int* create (Tree *pids) {
                 pids->rightQueue = -1;
                 pids->receiveQueue = queueNum;
             } else {
-                cerr << "Deu pau no fork." << endl;
+                cerr << "ERRO: Nao foi possivel realizar o fork." << endl;
             }
         } else if (pids->leftChild == 0) {
             //se for filho, zeramos as informacoes
@@ -56,7 +56,7 @@ int* create (Tree *pids) {
             pids->rightQueue = -1;
             pids->leftQueue = -1;
         } else {
-            cerr << "Deu pau no fork." << endl;
+            cerr << "ERRO: Nao foi possivel realizar o fork." << endl;
         }
     }
 
@@ -117,7 +117,7 @@ int* createQueues () {
         ret[i] = msgget(numbers[i], IPC_CREAT | 0x1FF);
         //cout << "i: " << i << "\t" << ret[i] << endl;
         if (ret[i] < 0) {
-            cerr << "Deu pau." << endl;
+            cerr << "ERRO: Nao foi possivel criar a fila." << endl;
         }
     }
 
@@ -128,7 +128,20 @@ void deleteQueues(int *queues) {
     for (int i=0; i<14; i++) {
         //cout << "Deletando: " << queues[i] << endl;
         if (msgctl(queues[i], IPC_RMID, NULL) != 0) {
-            cerr << "Deu pau." << endl;
+            cerr << "ERRO: Nao foi possivel deletar a fila." << endl;
         }
+    }
+}
+
+//funcao para esperar os filhos retornarem
+void waitKids (Tree *info) {
+    int ret;
+
+    if (info->leftChild != -1) {
+        waitpid(info->leftChild, &ret, 0);
+    }
+
+    if (info->rightChild != -1) {
+        waitpid(info->rightChild, &ret, 0);
     }
 }

@@ -29,90 +29,81 @@ void rootLoop (Tree *info) {
     int signalCheck;
     //deifne o tratamento das excecoes
     signal(SIGALRM, executeScheduled);
-    //descritores de arquivo para o pipe
-    int fd[2];
 
-    //cria o pipe
-    pipe(fd);
+    while (1) { 
+        printMenu(false);
+        scanf("%[^\n]s", in);
+        getchar();
 
-    //cria o processo que vai interagir com o usuario
-    int pid = fork();
+        if (!strcmp(in, "escalonador &") || !strcmp(in, "2")) {
+            //loop enquanto o usuario nao pedir para sair
+            while (1) {
+                printMenu(true);
+                //verifica se a interrupcao nao ocorreu aqui
+                signalCheck = 0;
+                signalCheck = scanf("%[^\n]s", in);
 
-    if (pid == 0) {
-        //o processo filho interage com o usuario
-        cout << "Digite \"SAIR\" para terminar o processo.\n\n";
-        while (1) {
-            scanf("%[^\n]s", in);
-            getchar();
-            write(fd[1], in, strlen(in)+1);
-            if (!strcmp(in, "SAIR")) {
-                exit(0);
-            }
-        }
-    } else {
-        //o processo pai fica no background controlando a execucao
-        while (1) {
-            //verifica se a interrupcao nao ocorreu aqui
-            signalCheck = 0;
-            signalCheck = read(fd[0], in, sizeof(in));
+                if (signalCheck == 1) {
+                    getchar();
+                } else {
+                    continue;
+                }
 
-            //se a interrupcao ocorreu antes da leitura,
-            //vamos ler de novo na proxima iteracao
-            if (signalCheck <= 0) {
-                continue;
-            }
+                //checa se o usuario quer sair
+                if (!strcmp(in, "SAIR")) {
+                    break;
+                }
 
-            //checa se o usuario quer sair
-            if (!strcmp(in, "SAIR")) {
-                int ret;
-                waitpid(pid, &ret, 0);
-                break;
+                //caso nao queira, a execucao continua abaixo
+
+                //tratamos a entrada
+                timedCommand *command = prepareCommand(in);
+
+                //inserimos o novo elemento na lista
+                scheduled = insert(scheduled, command);
+
+                //chama a funcao para ver se tem algo para executar
+                checkRun();
             }
 
-            //checa se o usuario nao entrou com a forma correta
-            if (strstr(in, "executa_postergado") == NULL) {
-                fprintf(stderr, "ERRO: formato desconhecido!\n");
-                fprintf(stderr, "Formato: executa_postergado [delay] [arquivo]\n");
-                continue;
-            }
+            //apaga o alarm caso estivesse setado
+            alarm(0);
 
-            //tratamos a entrada
+            //imprimimos para o usuario os comandos nao executados
+            if (!isEmpty(scheduled)) {
+                cout << "Os seguintes comandos nao foram executados:\n";
+                scheduled = show(scheduled);
+                //liberamos a memoria que estava alocada
+                _delete(scheduled);
+                scheduled = NULL;
+            }
+        } else if (strstr(in, "executa_postergado") != NULL) {
+            //prepara o input
             timedCommand *command = prepareCommand(in+strlen("executa_postergado "));
-
-            //inserimos o novo elemento na lista
-            scheduled = insert(scheduled, command);
-
-            //chama a funcao para ver se tem algo para executar
-            checkRun();
-        }
-
-        //apaga o alarm caso estivesse setado
-        alarm(0);
-
-        //imprimimos para o usuario os comandos nao executados
-        if (!isEmpty(scheduled)) {
-            printf("\nOs seguintes comandos nao foram executados:\n");
-            scheduled = show(scheduled);
-            //liberamos a memoria que estava alocada
-            _delete(scheduled);
-            scheduled = NULL;
-        }
-
-        //imprimimos para o usuario os comandos executados
-        if (!isEmpty(finished)) {
-            printf("\nOs comandos executados foram:\n");
-            finished = show(finished);
-            //liberamos a memoria que estava alocada
-            _delete(finished);  
-            finished = NULL; 
+            //executa o comando
+            List *newList = (List*) malloc(sizeof(List));
+            newList->element = command;
+            newList->prox = NULL;
+            executeCommand(newList);
+        } else if (!strcmp(in, "SAIR")){
+            break;
         } else {
-            printf("\nNenhum comando foi executado.\n");
+            cout << endl << endl << "Desculpe, comando nao reconhecido!" << endl;
         }
-
-        //mata e espera os processos filhos
-        sendKill();
-        waitKids(info);
     }
+
+    //imprimimos para o usuario os comandos nao executados
+    if (!isEmpty(finished)) {
+        cout << "\nOs comandos executados foram:" << endl;
+        finished = show(finished);
+        //liberamos a memoria que estava alocada
+        _delete(finished);  
+        finished = NULL; 
+    } else {
+        cout << "\nNenhum comando foi executado.\n" << endl;
+    }
+
+    //killKids();
 }
 
 //funcao que recupera as informacoes da string de entrada do usuario
@@ -249,6 +240,22 @@ int getDelay (char* in, timedCommand* command) {
     return i;
 }
 
+//funcao para imprimir o menu ao usuario
+void printMenu (bool scheduler) {
+    if (!scheduler) {
+        cout << endl << "MENU PRINCIPAL" << endl << endl;
+        cout << "Para sair, entre \"SAIR\"" << endl;
+        cout << "Opcao 1: executa_postergado <seg> <arq_executavel>" << endl;
+        cout << "Opcao 2: escalonador &" << endl << endl;
+        cout << "Informe opcao: ";
+
+    } else {
+        cout << endl << "ESCALONADOR" << endl << endl;
+        cout << "Para sair, entre \"SAIR\"" << endl;
+        cout << "Informe <seg> <arq_executavel>: ";
+    }
+}
+
 //funcao que trata o sinal do alarm indicando que esta na hora de uma execucao
 void executeScheduled (int dummy) {
     //pega o primeiro item da lista dos comandos que estao esperando
@@ -274,13 +281,12 @@ void executeCommand (List *command) {
         sleep(diff);
     }
 
-    //envia para os filhos o comando a executar
-    sendMessage(command->element);
+    //sendMessage(command->element);
 
     //guardamos o tempo real de inicio
     command->element->startTime = time(NULL);
     //executamos o comando
-    command->element->runTime = run(command->element);
+    command->element->runTime = run(command->element->argv);
     //guardamos o tempo de fim
     command->element->finishedTime = time(NULL);
     cout << "\n\nTempo gasto: " << command->element->runTime << endl << endl;
@@ -312,8 +318,7 @@ void checkRun () {
 //funcao para mandar mensagens aos filhos
 void sendMessage (timedCommand *command) {
     Message msg;
-
-    commandToMessage(command, &msg);
+    msg.info = (char*) command->argv;
 
     //manda a mensagem para o filho da esquerda
     msg.pid = rootInfo->leftChild;
@@ -324,16 +329,14 @@ void sendMessage (timedCommand *command) {
     msgsnd(rootInfo->rightQueue, &msg, sizeof(msg), 0);
 }
 
-void sendKill () {
-    //define a mensagem usada para matar os outros processos
-    Message msg;
-    msg.quit = true;
-
-    //manda a mensagem para o filho da esquerda
-    msg.pid = rootInfo->leftChild;
-    msgsnd(rootInfo->leftQueue, &msg, sizeof(msg), 0);
-
-    //manda a mensagem para o filho da direita
-    msg.pid = rootInfo->rightChild;
-    msgsnd(rootInfo->rightQueue, &msg, sizeof(msg), 0);
+//funcao para mandar a mensagem de fim aos filhos
+void killKids () {
+    timedCommand *quit = (timedCommand*) sizeof(timedCommand);
+    //mensagem especial que informa o termino da execucao
+    quit->argv = NULL;
+    sendMessage(quit);
+    //espera os filhos terminarem
+    int ret;
+    waitpid(rootInfo->leftChild, &ret, 0);
+    waitpid(rootInfo->rightChild, &ret, 0);
 }

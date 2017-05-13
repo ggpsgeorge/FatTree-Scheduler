@@ -208,3 +208,47 @@ void _delete(List *list) {
 		} while (list != NULL);
 	}
 }
+
+//transforma um comando em uma mensagem
+void commandToMessage(timedCommand *in, Message *out) {
+	//verifica se eh necessario alocar o espaco
+	if (out == NULL) {
+		out = (Message*) malloc(sizeof(Message));
+	}
+
+	//indica que nao eh a mensagem de termino
+	out->quit = false;
+
+	out->nargs = in->argc;
+
+	if (in->argc<10) {
+		for (int i=0; i < in->argc; i++) {
+			strcpy(out->info[i], in->argv[i]);
+		}
+	} else {
+		cerr << "ERRO: O maximo de argumentos permitidos eh 10." << endl;
+	}
+}
+
+//transforma um comando em uma mensagem
+void messageToCommand(Message *in, timedCommand *out) {
+	//verifica se eh necessario alocar o espaco
+	if (out == NULL) {
+		out = (timedCommand*) malloc(sizeof(timedCommand));
+	}
+
+	out->argc = in->nargs;
+	out->argv = (char**) malloc(sizeof(char*) * out->argc+1);
+
+	for (int i=0; i < out->argc; i++) {
+		out->argv[i] = (char*) malloc(sizeof(char) * (strlen(in->info[i]) + 1));
+		strcpy(out->argv[i], in->info[i]);
+	} 
+
+	out->argv[out->argc] = NULL;
+}
+
+//funcao para chamar a outra funcao de execucao
+double run (timedCommand *command) {
+	return run(command->argv);
+}

@@ -16,6 +16,7 @@
 #include <ctime>
 #include <iostream>
 #include <cstring>
+#include "basic.h"
 
 using std::cout;
 using std::endl;
@@ -42,5 +43,8 @@ List* show(List*);
 timedCommand *copy(timedCommand*);
 void _deleteCommand(timedCommand*);
 void _delete(List*);
+void commandToMessage(timedCommand*, Message*);
+void messageToCommand(Message*, timedCommand*);
+double run(timedCommand*);
 
 #endif

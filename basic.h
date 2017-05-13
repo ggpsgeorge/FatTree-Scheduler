@@ -22,6 +22,10 @@
 #include <sys/msg.h>
 #include <cstring>
 
+
+#define MAX_ARGUMENTS 10
+#define MAX_ARGUMENT_LENGTH 20
+
 using std::cout;
 using std::cerr;
 using std::endl;
@@ -39,7 +43,9 @@ typedef struct {
 //comandos na fila de mensagem
 typedef struct {
 	long pid;
-	char *info;
+	bool quit;
+	int nargs;
+	char info[MAX_ARGUMENTS][MAX_ARGUMENT_LENGTH];
 } Message;
 
 //prototipos das funcoes
@@ -47,5 +53,6 @@ int* create (Tree *pids);
 double run (char **argv);
 int* createQueues ();
 void deleteQueues(int*);
+void waitKids(Tree*);
 
 #endif
