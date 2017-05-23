@@ -5,7 +5,7 @@
 *     Caio Batista de Melo - 12/0049945
 *     Felipe Spinola - 12/0011131
 *     George Geonardo - 12/0012197
-*     Giovanni Torres - 
+*     Giovanni Torres - 12/0051087
 *     Guilherme Torres - 
 */
 
@@ -16,6 +16,7 @@
 #include <unistd.h>
 #include <sys/wait.h>
 #include <chrono>
+#include <ctime>
 #include <iostream>
 #include <sys/types.h>
 #include <sys/ipc.h>
@@ -34,9 +35,9 @@ using std::endl;
 //cada no sabe se eh a raiz
 //e os pids de seus filhos
 typedef struct {
-    pid_t leftChild, rightChild, my;
+    pid_t leftChild, rightChild, my, father;
     bool root, busy;
-    int leftQueue, rightQueue, receiveQueue;
+    int upQueue, downQueue;
 } Tree;
 
 //estrutura para passarmos os
@@ -48,11 +49,22 @@ typedef struct {
 	char info[MAX_ARGUMENTS][MAX_ARGUMENT_LENGTH];
 } Message;
 
+//estrutura da mensagem passada apos a execucao
+//com os tempos medidos
+typedef struct {
+	long pid;
+	long startTime, finishTime;
+	std::chrono::high_resolution_clock::time_point startChrono, finishChrono;
+	double runTime;
+} Result;
+
 //prototipos das funcoes
-int* create (Tree *pids);
-double run (char **argv);
-int* createQueues ();
-void deleteQueues(int*);
+void create (Tree *);
+void run (Tree *, char **, Result *);
+void createQueues (Tree*);
+void deleteQueues(Tree*);
 void waitKids(Tree*);
+void mergeResults (Tree*,Result*);
+void compareResults (Result*, Result*);
 
 #endif

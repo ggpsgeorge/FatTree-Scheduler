@@ -5,7 +5,7 @@
 *     Caio Batista de Melo - 12/0049945
 *     Felipe Spinola - 12/0011131
 *     George Geonardo - 12/0012197
-*     Giovanni Torres - 
+*     Giovanni Torres - 12/0051087
 *     Guilherme Torres - 
 */
 
@@ -17,7 +17,7 @@ void childrensLoop (Tree *info) {
     timedCommand cmd;
     while (1) {
         //espera por uma mensagem
-        msgrcv(info->receiveQueue, &msg, sizeof(msg), info->my, 0);
+        msgrcv(info->downQueue, &msg, sizeof(msg), info->my, 0);
         //manda a mensagem para os filhos
         propagateMessage(info, &msg);
         
@@ -29,7 +29,8 @@ void childrensLoop (Tree *info) {
 
         //se nao terminar, executamos o comando recebido
         messageToCommand(&msg, &cmd);
-        run(&cmd);
+        Result res;
+        run(info, cmd.argv, &res);
     }
 }
 
@@ -40,12 +41,12 @@ void propagateMessage (Tree *info, Message *send) {
 	if (info->leftChild > 0) {
 		//envia a mensagem para o filho da esquerda
 		send->pid = info->leftChild;
-		msgsnd(info->leftQueue, &send, sizeof(*send), 0);
+		msgsnd(info->downQueue, send, sizeof(*send), 0);
   }
 
   if (info->rightChild > 0) {
 		//envia a mensagem para o filho da direita
 		send->pid = info->rightChild;
-		msgsnd(info->rightQueue, send, sizeof(*send), 0);
+		msgsnd(info->downQueue, send, sizeof(*send), 0);
   }
 }

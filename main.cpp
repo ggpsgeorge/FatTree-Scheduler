@@ -5,7 +5,7 @@
 *     Caio Batista de Melo - 12/0049945
 *     Felipe Spinola - 12/0011131
 *     George Geonardo - 12/0012197
-*     Giovanni Torres - 
+*     Giovanni Torres - 12/0051087
 *     Guilherme Torres - 
 */
 
@@ -18,20 +18,20 @@ int main () {
     //variavel para armazenar as informacoes do processo
     Tree pids;
 
-    //funcao para criar os processos necessarios, guarda os IDs das filas de mensagem para poder deletar no final
-    int *queues = create(&pids);
+    //funcao para criar os processos necessarios
+    create(&pids);
 
     //se este processo for a raiz executa o loop da raiz,
     //caso contrario executa o loop dos filhos
     if (pids.root) {
-        rootLoop(&pids);
+         rootLoop(&pids);
     } else {
         childrensLoop(&pids);
     }
     
     //deleta as filas
     if (pids.root == true)
-        deleteQueues(queues);
+        deleteQueues(&pids);
 
     return 0;
 }

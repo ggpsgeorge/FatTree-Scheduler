@@ -5,7 +5,7 @@
 *     Caio Batista de Melo - 12/0049945
 *     Felipe Spinola - 12/0011131
 *     George Geonardo - 12/0012197
-*     Giovanni Torres - 
+*     Giovanni Torres - 12/0051087
 *     Guilherme Torres - 
 */
 
@@ -276,13 +276,21 @@ void executeCommand (List *command) {
 
     //envia para os filhos o comando a executar
     sendMessage(command->element);
-
+    
+    Result res;
+    //executa o comando e recebe os tempos na variavel res
+    run(rootInfo, command->element->argv, &res);
+    
     //guardamos o tempo real de inicio
-    command->element->startTime = time(NULL);
+
+
+
+    command->element->startTime = res.startTime;
     //executamos o comando
-    command->element->runTime = run(command->element);
+    command->element->runTime = res.runTime;
     //guardamos o tempo de fim
-    command->element->finishedTime = time(NULL);
+    command->element->finishedTime = res.finishTime;
+    
     cout << "\n\nTempo gasto: " << command->element->runTime << endl << endl;
 
     //o insere na lista dos terminados
@@ -317,11 +325,11 @@ void sendMessage (timedCommand *command) {
 
     //manda a mensagem para o filho da esquerda
     msg.pid = rootInfo->leftChild;
-    msgsnd(rootInfo->leftQueue, &msg, sizeof(msg), 0);
+    msgsnd(rootInfo->downQueue, &msg, sizeof(msg), 0);
 
     //manda a mensagem para o filho da direita
     msg.pid = rootInfo->rightChild;
-    msgsnd(rootInfo->rightQueue, &msg, sizeof(msg), 0);
+    msgsnd(rootInfo->downQueue, &msg, sizeof(msg), 0);
 }
 
 void sendKill () {
@@ -331,9 +339,9 @@ void sendKill () {
 
     //manda a mensagem para o filho da esquerda
     msg.pid = rootInfo->leftChild;
-    msgsnd(rootInfo->leftQueue, &msg, sizeof(msg), 0);
+    msgsnd(rootInfo->downQueue, &msg, sizeof(msg), 0);
 
     //manda a mensagem para o filho da direita
     msg.pid = rootInfo->rightChild;
-    msgsnd(rootInfo->rightQueue, &msg, sizeof(msg), 0);
+    msgsnd(rootInfo->downQueue, &msg, sizeof(msg), 0);
 }
